@@ -58,6 +58,8 @@ The *outline-indent* Emacs package offers a similar functionality to Vim's `set 
     - [What programming languages are supported?](#what-programming-languages-are-supported)
     - [Does `outline-indent-minor-mode` work with Emacs Lisp or other programming languages, and how does it differ from the built-in `outline-minor-mode`?](#does-outline-indent-minor-mode-work-with-emacs-lisp-or-other-programming-languages-and-how-does-it-differ-from-the-built-in-outline-minor-mode)
     - [How to make Emacs indent new lines based on previous non-blank line?](#how-to-make-emacs-indent-new-lines-based-on-previous-non-blank-line)
+    - [How to ignore certain major modes](#how-to-ignore-certain-major-modes)
+    - [Customization](#customization)
     - [What other packages can be used to maintain proper indentation in indentation-sensitive programming languages?](#what-other-packages-can-be-used-to-maintain-proper-indentation-in-indentation-sensitive-programming-languages)
       - [Displaying vertical indentation guide bars](#displaying-vertical-indentation-guide-bars)
     - [What code folding packages does the author use?](#what-code-folding-packages-does-the-author-use)
@@ -429,6 +431,30 @@ The following code snippet configures Emacs to indent based on the indentation o
 ;; `indent-relative-first-indent-point'.
 (setq-default indent-line-ignored-functions '())
 ```
+
+### How to ignore certain major modes
+
+The `outline-indent` package defines the variable `outline-indent-ignored-modes`, which specifies a list of major modes where `outline-indent-minor-mode` must not activate. Its default value is `'(org-mode markdown-mode)`, since these modes provide their own indentation and structural logic that may conflict with `outline-indent`.
+
+Example configuration:
+
+```elisp
+;; A list of major modes where `outline-indent-minor-mode' must not activate
+(setq outline-indent-ignored-modes '(org-mode markdown-mode))
+```
+
+Certain major modes implement native indentation logic that is tightly integrated with their document structure. These modes are excluded by default in order to preserve their intended behavior. For example, `org-mode` and `markdown-mode` already provide their own outline configuration, which functions correctly without additional indentation support.
+
+### Customization
+
+To modify the list of ignored modes:
+
+```elisp
+(setq outline-indent-ignored-modes
+      '(org-mode markdown-mode text-mode))
+```
+
+Only symbols corresponding to major modes should be included in this list.
 
 ### What other packages can be used to maintain proper indentation in indentation-sensitive programming languages?
 

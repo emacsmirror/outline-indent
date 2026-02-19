@@ -1070,8 +1070,9 @@ WHICH is ignored (backward compatibility with `outline-promote')."
             (outline-indent--setup-basic-offset)
 
             ;; Enable minor mode
-            (outline-indent--setup-outline)
-            (outline-minor-mode 1))))
+            (outline-indent--setup-outline))
+
+          (outline-minor-mode 1)))
     ;; Disable minor mode
     (outline-minor-mode -1)
     (kill-local-variable 'outline-minor-mode-highlight)
