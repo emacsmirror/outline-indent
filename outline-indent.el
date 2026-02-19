@@ -225,7 +225,7 @@ It is recommended to keep this set to t for improved behavior."
     (outline-indent--advise-func value))
   :group 'outline-indent)
 
-(defcustom outline-indent-ignored-modes nil
+(defcustom outline-indent-ignored-modes '(org-mode markdown-mode)
   "List of major modes where `outline-indent-minor-mode' will not start."
   :type '(repeat symbol)
   :group 'outline-indent)
