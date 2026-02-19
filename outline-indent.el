@@ -374,26 +374,6 @@ follow the mode-specific coding style automatically."
       (unless outline-indent-shift-width
         (setq-local outline-indent-shift-width major-mode-offset)))))
 
-(defun outline-indent-level-ignore-empty-lines ()
-  "Determine the outline level based on the current indentation."
-  (let* ((indentation-string (match-string 1))
-         (indentation-width (if indentation-string
-                                (string-width indentation-string)
-                              0))
-         (depth (if (and (= indentation-width 0)
-                         (save-excursion
-                           (beginning-of-line)
-                           (looking-at-p "^\\s-*$")))
-                    0
-                  (+ 1 (/ indentation-width
-                          (max (if outline-indent-default-offset
-                                   outline-indent-default-offset
-                                 1)
-                               1))))))
-    (if outline-indent-maximum-level
-        (min depth (1+ outline-indent-maximum-level))
-      depth)))
-
 (defun outline-indent-level ()
   "Determine the outline level based on the current indentation."
   (let* ((indentation-width (current-indentation))
@@ -502,15 +482,6 @@ selection operations."
     (goto-char (region-beginning))
     (deactivate-mark)))
 
-(defun outline-indent--advice-promote (orig-fun &rest args)
-  "Advice function for `outline-indent-shift-left'.
-If `outline-indent-minor-mode' is active, use `outline-indent-insert-heading'.
-Otherwise, call the original function with the given arguments.
-ORIG-FUN is the original function being advised, and ARGS are its arguments."
-  (if (bound-and-true-p outline-indent-minor-mode)
-      (outline-indent-shift-left)
-    (apply orig-fun args)))
-
 (defun outline-indent--advice-show-entry (orig-fun &rest args)
   "Advice function for `outline-show-entry'.
 If `outline-indent-minor-mode' is active, use `outline-indent-open-fold'.
@@ -527,6 +498,15 @@ Otherwise, call the original function with the given arguments. ORIG-FUN is the
 original function being advised, and ARGS are its arguments."
   (if (bound-and-true-p outline-indent-minor-mode)
       (outline-indent-close-fold)
+    (apply orig-fun args)))
+
+(defun outline-indent--advice-promote (orig-fun &rest args)
+  "Advice function for `outline-indent-shift-left'.
+If `outline-indent-minor-mode' is active, use `outline-indent-insert-heading'.
+Otherwise, call the original function with the given arguments.
+ORIG-FUN is the original function being advised, and ARGS are its arguments."
+  (if (bound-and-true-p outline-indent-minor-mode)
+      (outline-indent-shift-left)
     (apply orig-fun args)))
 
 (defun outline-indent--advice-demote (orig-fun &rest args)
@@ -812,10 +792,34 @@ visual region spanning from the heading start to the end of the block."
 (defun outline-indent-close-folds ()
   "Close all folds and ensure the first heading remains visible."
   (interactive)
-  (unwind-protect
-      (with-no-warnings
-        (outline-hide-sublevels 1))
-    (outline-indent--ensure-window-start-heading-visible)))
+  (save-excursion
+    (goto-char (point-min))
+
+    ;; Handle preamble (if the file doesn't start with a heading)
+    (unless (outline-on-heading-p)
+      (outline-next-heading))
+
+    ;; Collapse every top-level heading found
+    (let ((done nil))
+      (while (and (not done)
+                  (not (eobp))
+                  (outline-on-heading-p))
+        (let ((current-point (point)))
+          ;; Hide the subtree
+          (condition-case nil
+              (outline-indent--legacy-outline-hide-subtree)
+            (error
+             nil))
+
+          ;; Try to move to the next visible heading.
+          (progn
+            (outline-next-visible-heading 1)
+            ;; SAFETY CHECK: If point did not move forward, we
+            ;; must stop. This catches cases where the function
+            ;; returns successfully but fails to advance (e.g., at
+            ;; the last heading in some modes).
+            (when (<= (point) current-point)
+              (setq done t))))))))
 
 ;;;###autoload
 (defun outline-indent-open-folds ()
@@ -1029,6 +1033,20 @@ WHICH is ignored (backward compatibility with `outline-promote')."
 ;;          (group (zero-or-more (any " \t")))
 ;;          (not (any " \t\n")))))
 
+(defun outline-indent--setup-outline ()
+  "Enforce outline variables for `outline-indent-minor-mode'."
+  (when (boundp 'outline-minor-mode-highlight)
+    (setq-local outline-minor-mode-highlight nil))
+  (when (boundp 'outline-search-function)
+    (setq-local outline-search-function nil))
+  (setq-local outline-heading-alist nil)
+  (setq-local outline-level #'outline-indent-level)
+  (setq-local outline-heading-end-regexp "\n")
+  ;; (setq-local outline-regexp (outline-indent--heading-regexp))
+  (setq-local outline-regexp (rx line-start
+                                 (group (zero-or-more (any " \t")))
+                                 (not (any " \t\n")))))
+
 ;;;###autoload
 (define-minor-mode outline-indent-minor-mode
   "Minor mode for folding text according to indentation levels."
@@ -1054,20 +1072,11 @@ WHICH is ignored (backward compatibility with `outline-promote')."
 
             (outline-indent--advise-func outline-indent-advise-outline-functions)
 
-            ;; Enable minor mode
-            (when (boundp 'outline-minor-mode-highlight)
-              (setq-local outline-minor-mode-highlight nil))
-            (when (boundp 'outline-search-function)
-              (setq-local outline-search-function nil))
-            (setq-local outline-heading-alist nil)
-            (setq-local outline-level #'outline-indent-level)
-            (setq-local outline-heading-end-regexp "\n")
-            ;; (setq-local outline-regexp (outline-indent--heading-regexp))
-            (setq-local outline-regexp (rx line-start
-                                           (group (zero-or-more (any " \t")))
-                                           (not (any " \t\n"))))
             (outline-indent--update-ellipsis)
             (outline-indent--setup-basic-offset)
+
+            ;; Enable minor mode
+            (outline-indent--setup-outline)
             (outline-minor-mode 1))))
     ;; Disable minor mode
     (outline-minor-mode -1)
