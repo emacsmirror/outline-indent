@@ -231,6 +231,11 @@ It is recommended to keep this set to t for improved behavior."
     (outline-indent--advise-func value))
   :group 'outline-indent)
 
+(defcustom outline-indent-ignored-modes nil
+  "List of major modes where `outline-indent-minor-mode' will not start."
+  :type '(repeat symbol)
+  :group 'outline-indent)
+
 (defvar outline-indent-minor-mode-map
   (let ((map (make-sparse-keymap)))
     map)
@@ -1032,31 +1037,38 @@ WHICH is ignored (backward compatibility with `outline-promote')."
   :group 'outline-indent
   (if outline-indent-minor-mode
       (progn
-        ;; Disable conflicting modes
-        (dolist (mode outline-indent-conflicting-modes)
-          (when (and (boundp mode)
-                     (symbol-value mode)
-                     (fboundp mode))
-            (save-excursion
-              (funcall mode -1))))
+        (let ((ignored-mode-p nil))
+          (dolist (mode outline-indent-ignored-modes)
+            (when (derived-mode-p mode)
+              (setq ignored-mode-p t)))
 
-        (outline-indent--advise-func outline-indent-advise-outline-functions)
+          (if ignored-mode-p
+              (setq outline-indent-minor-mode nil)
+            ;; Disable conflicting modes
+            (dolist (mode outline-indent-conflicting-modes)
+              (when (and (boundp mode)
+                         (symbol-value mode)
+                         (fboundp mode))
+                (save-excursion
+                  (funcall mode -1))))
 
-        ;; Enable minor mode
-        (when (boundp 'outline-minor-mode-highlight)
-          (setq-local outline-minor-mode-highlight nil))
-        (when (boundp 'outline-search-function)
-          (setq-local outline-search-function nil))
-        (setq-local outline-heading-alist nil)
-        (setq-local outline-level #'outline-indent-level)
-        (setq-local outline-heading-end-regexp "\n")
-        ;; (setq-local outline-regexp (outline-indent--heading-regexp))
-        (setq-local outline-regexp (rx line-start
-                                       (group (zero-or-more (any " \t")))
-                                       (not (any " \t\n"))))
-        (outline-indent--update-ellipsis)
-        (outline-indent--setup-basic-offset)
-        (outline-minor-mode 1))
+            (outline-indent--advise-func outline-indent-advise-outline-functions)
+
+            ;; Enable minor mode
+            (when (boundp 'outline-minor-mode-highlight)
+              (setq-local outline-minor-mode-highlight nil))
+            (when (boundp 'outline-search-function)
+              (setq-local outline-search-function nil))
+            (setq-local outline-heading-alist nil)
+            (setq-local outline-level #'outline-indent-level)
+            (setq-local outline-heading-end-regexp "\n")
+            ;; (setq-local outline-regexp (outline-indent--heading-regexp))
+            (setq-local outline-regexp (rx line-start
+                                           (group (zero-or-more (any " \t")))
+                                           (not (any " \t\n"))))
+            (outline-indent--update-ellipsis)
+            (outline-indent--setup-basic-offset)
+            (outline-minor-mode 1))))
     ;; Disable minor mode
     (outline-minor-mode -1)
     (kill-local-variable 'outline-minor-mode-highlight)
