@@ -132,12 +132,6 @@ suitable for representing folded content."
   :type '(choice string (const nil))
   :group 'outline-indent)
 
-(define-obsolete-variable-alias
-  'outline-indent-make-window-start-visible
-  'make-window-start-visible
-  "1.1.4"
-  "Obsolete. Use `make-window-start-visible' instead.")
-
 (defcustom outline-indent-insert-heading-add-blank-line nil
   "Non-nil to make `outline-indent-insert-heading' add a blank line.
 
@@ -492,7 +486,7 @@ ORIG-FUN is the original function being advised, and ARGS are its arguments."
     (apply orig-fun args)))
 
 (defun outline-indent--advice-outline-hide-subtree (orig-fun &rest args)
-  "Advice function for `outline-hide-subtre'.
+  "Advice function for `outline-hide-subtree'.
 If `outline-indent-minor-mode' is active, use `outline-indent-close-fold'.
 Otherwise, call the original function with the given arguments. ORIG-FUN is the
 original function being advised, and ARGS are its arguments."
