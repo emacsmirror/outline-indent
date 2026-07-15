@@ -908,7 +908,6 @@ visual region spanning from the heading start to the end of the block."
   ;; the last heading in some modes).
   (let ((outline-indent-minor-mode nil)
         (kirigami-enhance-outline t))
-    (ignore outline-indent-minor-mode)
     (kirigami-close-folds)))
 
 ;;;###autoload
@@ -917,7 +916,6 @@ visual region spanning from the heading start to the end of the block."
   (interactive)
   (let ((outline-indent-minor-mode nil)
         (kirigami-enhance-outline t))
-    (ignore outline-indent-minor-mode)
     (kirigami-open-folds)))
 
 ;;;###autoload
@@ -936,7 +934,6 @@ visual region spanning from the heading start to the end of the block."
   ;; expand the content under the cursor. Ignore `outline-before-first-heading'
   (let ((outline-indent-minor-mode nil)
         (kirigami-enhance-outline t))
-    (ignore outline-indent-minor-mode)
     (kirigami-open-fold)))
 
 ;;;###autoload
@@ -957,7 +954,6 @@ visible in the window after hiding."
   ;; their subtrees were folded.
   (let ((outline-indent-minor-mode nil)
         (kirigami-enhance-outline t))
-    (ignore outline-indent-minor-mode)
     (kirigami-close-fold)))
 
 ;;;###autoload
@@ -967,7 +963,6 @@ visible in the window after hiding."
   ;; Ignore `outline-before-first-heading'
   (let ((outline-indent-minor-mode nil)
         (kirigami-enhance-outline t))
-    (ignore outline-indent-minor-mode)
     (kirigami-open-fold-rec)))
 
 ;;;###autoload
@@ -976,7 +971,6 @@ visible in the window after hiding."
   (interactive)
   (let ((outline-indent-minor-mode nil)
         (kirigami-enhance-outline t))
-    (ignore outline-indent-minor-mode)
     (kirigami-toggle-fold)))
 
 ;;;###autoload
